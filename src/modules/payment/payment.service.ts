@@ -79,6 +79,11 @@ const confirmPayment = async (payload: { paymentIntentId: string; rentalOrderId:
         throw new Error("Payment has not been completed");
     }
 
+    const rentalOrder = await prisma.rentalOrder.findUniqueOrThrow({
+        where: { id: rentalOrderId },
+        select: { gearItemId: true, quantity: true }
+    });
+
     await prisma.$transaction(async (tx) => {
         await tx.payment.update({
             where: { rentalOrderId },
@@ -92,6 +97,11 @@ const confirmPayment = async (payload: { paymentIntentId: string; rentalOrderId:
         await tx.rentalOrder.update({
             where: { id: rentalOrderId },
             data: { status: "PAID" }
+        });
+
+        await tx.gearItem.update({
+            where: { id: rentalOrder.gearItemId },
+            data: { quantity: { decrement: rentalOrder.quantity } }
         });
     });
 
@@ -157,6 +167,11 @@ const handleWebhook = async (payload: Buffer, signature: string) => {
                 return;
             }
 
+            const rentalOrder = await prisma.rentalOrder.findUniqueOrThrow({
+                where: { id: rentalOrderId },
+                select: { gearItemId: true, quantity: true }
+            });
+
             await prisma.$transaction(async (tx) => {
                 await tx.payment.update({
                     where: { rentalOrderId },
@@ -170,6 +185,11 @@ const handleWebhook = async (payload: Buffer, signature: string) => {
                 await tx.rentalOrder.update({
                     where: { id: rentalOrderId },
                     data: { status: "PAID" }
+                });
+
+                await tx.gearItem.update({
+                    where: { id: rentalOrder.gearItemId },
+                    data: { quantity: { decrement: rentalOrder.quantity } }
                 });
             });
 
@@ -200,6 +220,11 @@ const handleWebhook = async (payload: Buffer, signature: string) => {
                 return;
             }
 
+            const rentalOrder = await prisma.rentalOrder.findUniqueOrThrow({
+                where: { id: rentalOrderId },
+                select: { gearItemId: true, quantity: true }
+            });
+
             await prisma.$transaction(async (tx) => {
                 await tx.payment.update({
                     where: { rentalOrderId },
@@ -213,6 +238,11 @@ const handleWebhook = async (payload: Buffer, signature: string) => {
                 await tx.rentalOrder.update({
                     where: { id: rentalOrderId },
                     data: { status: "PAID" }
+                });
+
+                await tx.gearItem.update({
+                    where: { id: rentalOrder.gearItemId },
+                    data: { quantity: { decrement: rentalOrder.quantity } }
                 });
             });
 

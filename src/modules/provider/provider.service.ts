@@ -102,8 +102,8 @@ const updateOrderStatus = async (orderId: string, providerId: string, status: st
     const validTransitions: Record<string, string[]> = {
         "PLACED": ["CONFIRMED", "CANCELLED"],
         "CONFIRMED": ["PAID", "CANCELLED"],
-        "PAID": ["PICKED_UP"],
-        "PICKED_UP": ["RETURNED"],
+        "PAID": ["PICKED_UP", "CANCELLED"],
+        "PICKED_UP": ["RETURNED", "CANCELLED"],
     };
 
     const allowed = validTransitions[order.status];
@@ -111,11 +111,13 @@ const updateOrderStatus = async (orderId: string, providerId: string, status: st
         throw new Error(`Cannot transition from ${order.status} to ${status}`);
     }
 
-    if (status === "RETURNED") {
-        await prisma.gearItem.update({
-            where: { id: order.gearItemId },
-            data: { quantity: { increment: order.quantity } }
-        });
+    if (status === "RETURNED" || status === "CANCELLED") {
+        if (order.status === "PAID" || order.status === "PICKED_UP") {
+            await prisma.gearItem.update({
+                where: { id: order.gearItemId },
+                data: { quantity: { increment: order.quantity } }
+            });
+        }
     }
 
     const updated = await prisma.rentalOrder.update({
