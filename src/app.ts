@@ -16,7 +16,7 @@ import { reviewRoutes } from "./modules/review/review.route";
 const app: Application = express();
 
 app.use(cors({
-    origin: config.app_url,
+    origin: config.app_url || true,
     credentials: true,
 }))
 
